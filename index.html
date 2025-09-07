@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -118,9 +120,6 @@
   <label for="password">Password:</label>
   <input type="password" id="password" placeholder="Password" autocomplete="off" />
   <button onclick="login()">Login</button>
-
-  <p style="margin-top:20px; font-size:14px; color:#aaa;">
-  </p>
 </div>
 
 <!-- USER PANEL -->
@@ -152,24 +151,24 @@
   // --- USERS ---
   let users = [
     { username: "cyrus344", password: "cyrus344", balance: 350, role: "user" },
-    { username: "Vishal12", password: "pass123", balance: 00, role: "user" },
+    { username: "Vishal12", password: "pass123", balance: 0, role: "user" },
     { username: "admin", password: "admin123", role: "admin" }
   ];
 
   let currentUser = null;
 
-  // --- MATCHES ---
-  const matches = {
-    { id: "GAW-ST&NP", teams: ["Guyana Amazon Warriors", "St Kitts & Navis Patriots"], tossTime: new Date(Date.now() + 60 * 60000) }
+  // --- MATCHES (fixed as an array of objects) ---
+  const matches = [
+    { id: "GAW-STNP", teams: ["Guyana Amazon Warriors", "St Kitts & Nevis Patriots"], tossTime: new Date(Date.now() + 60 * 60000) }
   ];
 
-  const ODDS = 1.97;
+  const ODDS = 1.98;
 
   // Store all bets: { username: [ { matchId, team, amount, odds, settled, win, placedAt } ] }
   let allBets = {};
 
   const MIN_BET = 10;
-  const MAX_BET = 100;
+  const MAX_BET = 300;
 
   // --- LOCAL STORAGE FUNCTIONS ---
   function saveData() {
@@ -185,14 +184,12 @@
 
     if (savedUsers) {
       const parsedUsers = JSON.parse(savedUsers);
-      // Merge balances and roles but keep passwords from initial
       parsedUsers.forEach(savedUser => {
         const userIndex = users.findIndex(u => u.username === savedUser.username);
         if (userIndex !== -1) {
           users[userIndex].balance = savedUser.balance;
           users[userIndex].role = savedUser.role;
         } else {
-          // New user from storage? Add them
           users.push(savedUser);
         }
       });
@@ -205,7 +202,6 @@
     if (savedCurrentUser) {
       currentUser = JSON.parse(savedCurrentUser);
       if (currentUser) {
-        // Refresh balance from users array for safety
         const usr = users.find(u => u.username === currentUser.username);
         if (usr) currentUser.balance = usr.balance;
       }
@@ -279,8 +275,8 @@
         <label for="amount-${match.id}">Bet Amount (₹${MIN_BET}–₹${MAX_BET}):</label>
         <input type="number" id="amount-${match.id}" min="${MIN_BET}" max="${MAX_BET}" placeholder="Enter bet amount" ${!isOpen ? "disabled" : ""} />
         <div class="bet-btns">
-          <button id="btn-${match.id}-1" ${!isOpen ? "disabled class='disabled'" : ""} onclick="placeBet('${match.id}', '${match.teams[0]}')">${match.teams[0]} @1.90</button>
-          <button id="btn-${match.id}-2" ${!isOpen ? "disabled class='disabled'" : ""} onclick="placeBet('${match.id}', '${match.teams[1]}')">${match.teams[1]} @1.90</button>
+          <button id="btn-${match.id}-1" ${!isOpen ? "disabled class='disabled'" : ""} onclick="placeBet('${match.id}', '${match.teams[0]}')">${match.teams[0]} @${ODDS.toFixed(2)}</button>
+          <button id="btn-${match.id}-2" ${!isOpen ? "disabled class='disabled'" : ""} onclick="placeBet('${match.id}', '${match.teams[1]}')">${match.teams[1]} @${ODDS.toFixed(2)}</button>
         </div>
         <div class="result" id="result-${match.id}"></div>
       `;
@@ -318,14 +314,11 @@
       return;
     }
 
-    // Deduct balance immediately
     currentUser.balance -= amount;
 
-    // Update global user list balance for persistence
     const userInList = users.find(u => u.username === currentUser.username);
     if (userInList) userInList.balance = currentUser.balance;
 
-    // Store bet
     if (!allBets[currentUser.username]) allBets[currentUser.username] = [];
     allBets[currentUser.username].push({
       matchId,
@@ -342,7 +335,7 @@
     updateBalance();
     renderUserBets();
 
-    alert(`Bet placed: ₹${amount} on ${team} toss @1.90`);
+    alert(`Bet placed: ₹${amount} on ${team} toss @${ODDS.toFixed(2)}`);
 
     saveData();
   }
@@ -354,7 +347,7 @@
       return;
     }
 
-    const bets = allBets[currentUser.username].slice().reverse(); // latest first
+    const bets = allBets[currentUser.username].slice().reverse();
 
     let html = "<table><thead><tr><th>Match</th><th>Bet On</th><th>Amount (₹)</th><th>Odds</th><th>Status</th></tr></thead><tbody>";
 
@@ -388,32 +381,13 @@
     const container = document.getElementById("adminMatches");
     container.innerHTML = "";
 
-    const now = new Date();
-
     matches.forEach(match => {
-      const matchBets = [];
-      for (const username in allBets) {
-        allBets[username].forEach(bet => {
-          if (bet.matchId === match.id && !bet.settled) {
-            matchBets.push({ username, bet });
-          }
-        });
-      }
-
       const div = document.createElement("div");
       div.className = "match";
-
-      let settledResult = "Not settled";
-      const anySettled = matchBets.some(({bet}) => bet.settled === true);
-      if (anySettled) {
-        const wonBet = matchBets.find(({bet}) => bet.settled && bet.win);
-        if (wonBet) settledResult = `Toss won by ${wonBet.bet.team}`;
-      }
 
       div.innerHTML = `
         <h3>${match.teams[0]} vs ${match.teams[1]}</h3>
         <div><strong>Toss Time:</strong> ${match.tossTime.toLocaleString()}</div>
-        <div><strong>Current result:</strong> ${settledResult}</div>
         <label>Set toss winner:</label>
         <select id="tossWinner-${match.id}">
           <option value="">Select winner</option>
@@ -435,9 +409,7 @@
       return;
     }
 
-    let betsSettled = 0;
-    let winnersCount = 0;
-    let losersCount = 0;
+    let betsSettled = 0, winnersCount = 0, losersCount = 0;
 
     for (const username in allBets) {
       const user = users.find(u => u.username === username);
@@ -481,10 +453,7 @@
     const all = [];
     for (const username in allBets) {
       allBets[username].forEach(bet => {
-        all.push({
-          username,
-          ...bet
-        });
+        all.push({ username, ...bet });
       });
     }
 
@@ -530,7 +499,6 @@
     });
 
     html += `</tbody></table>`;
-
     container.innerHTML = html;
   }
 
@@ -553,19 +521,5 @@
 
   if(currentUser){
     document.getElementById("loginContainer").style.display = "none";
-    if(currentUser.role === "admin"){
-      document.getElementById("adminPanel").style.display = "block";
-      renderAdminMatches();
-      renderAccountStatement();
-    } else {
-      document.getElementById("userPanel").style.display = "block";
-      updateBalance();
-      renderMatches();
-      renderUserBets();
-      document.getElementById("userNameDisplay").textContent = currentUser.username;
-    }
-  }
-</script>
+    if(currentUser.role === "
 
-</body>
-</html>
