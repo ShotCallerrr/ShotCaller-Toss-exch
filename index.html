@@ -1,45 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>ShotCaller Toss Exchange</title>
   <style>
-    body { font-family: Arial, sans-serif; background:#0b1a2e; color:#fff; margin:0; padding:0; }
-    header { background:#1f2e45; padding:20px; text-align:center; font-size:26px; font-weight:bold; color:#ffa500; }
-    .container { max-width:700px; margin:30px auto; background:#162b40; padding:25px; border-radius:10px; }
-    input, button, select { padding:10px; margin-top:10px; font-size:16px; border:none; border-radius:5px; display:block; width:100%; }
-    input[type="number"], input[type="text"], input[type="password"], select { background:#fff; color:#000; }
-    button { background:#ffa500; color:#000; cursor:pointer; }
-    .match { background:#203a5c; padding:15px; margin-top:25px; border-radius:8px; }
-    .match h3 { color:#ffa500; margin:0 0 8px 0; }
-    .bet-btns { display:flex; gap:10px; margin-top:10px; }
-    .bet-btns button { flex:1; font-weight:bold; }
-    .disabled { background:#555!important; cursor:not-allowed; }
-    .balance { color:#4fffa0; font-size:18px; margin-top:10px; font-weight:bold; }
-    .logout { background:#ff4d4d; margin-top:25px; }
-    .result { margin-top:10px; font-weight:bold; min-height:20px; }
-    label { margin-top:15px; display:block; font-weight:bold; }
-    #adminPanel, #userPanel { display:none; }
-    table { width:100%; border-collapse:collapse; margin-top:20px; color:#fff; }
-    th, td { border:1px solid #555; padding:8px; text-align:center; }
-    th { background:#ffa500; color:#000; }
+    body { font-family:Arial,sans-serif;background:#0b1a2e;color:#fff;margin:0;padding:0 }
+    header { background:#1f2e45;padding:20px;text-align:center;font-size:26px;font-weight:bold;color:#ffa500 }
+    .container { max-width:700px;margin:30px auto;background:#162b40;padding:25px;border-radius:10px }
+    input,button,select { padding:10px;margin-top:10px;font-size:16px;border:none;border-radius:5px;display:block;width:100% }
+    input[type=number],input[type=text],input[type=password],select { background:#fff;color:#000 }
+    button { background:#ffa500;color:#000;cursor:pointer }
+    .match { background:#203a5c;padding:15px;margin-top:25px;border-radius:8px }
+    .match h3 { color:#ffa500;margin:0 0 8px }
+    .bet-btns { display:flex;gap:10px;margin-top:10px }
+    .bet-btns button { flex:1;font-weight:bold }
+    .disabled { background:#555!important;cursor:not-allowed }
+    .balance { color:#4fffa0;font-size:18px;margin-top:10px;font-weight:bold }
+    .logout { background:#ff4d4d;margin-top:25px }
+    .result { margin-top:10px;font-weight:bold;min-height:20px }
+    label { margin-top:15px;display:block;font-weight:bold }
+    #adminPanel,#userPanel { display:none }
+    table { width:100%;border-collapse:collapse;margin-top:20px;color:#fff }
+    th,td { border:1px solid #555;padding:8px;text-align:center }
+    th { background:#ffa500;color:#000 }
   </style>
 </head>
 <body>
   <header>ShotCaller Toss Exchange</header>
 
-  <!-- LOGIN PANEL -->
   <div class="container" id="loginContainer">
     <h2>Login</h2>
-    <label for="username">Username:</label>
-    <input type="text" id="username" placeholder="Username" autocomplete="off">
-    <label for="password">Password:</label>
-    <input type="password" id="password" placeholder="Password" autocomplete="off">
+    <label>Username:</label><input type="text" id="username" autocomplete="off">
+    <label>Password:</label><input type="password" id="password" autocomplete="off">
     <button id="loginBtn">Login</button>
   </div>
 
-  <!-- USER PANEL -->
   <div class="container" id="userPanel">
     <h2>Welcome, <span id="userNameDisplay"></span></h2>
     <div class="balance">Balance: ₹<span id="userBalance"></span></div>
@@ -49,7 +44,6 @@
     <button class="logout" id="logoutBtnUser">Logout</button>
   </div>
 
-  <!-- ADMIN PANEL -->
   <div class="container" id="adminPanel">
     <h2>Admin Panel</h2>
     <button class="logout" id="logoutBtnAdmin">Logout</button>
@@ -60,159 +54,119 @@
   </div>
 
   <script>
-    // --- Data Definitions ---
     let users = [
-      { username: "GoruS123", password: "cyrus344", balance: 210, role: "user" },
-      { username: "Jassi01", password: "cyrus344", balance: 73, role: "user" },
-      { username: "admin", password: "admin123", balance: 0, role: "admin" }
+      {username:"GoruS123",password:"cyrus344",balance:210,role:"user"},
+      {username:"Jassi01",password:"cyrus344",balance:73,role:"user"},
+      {username:"admin",password:"admin123",balance:0,role:"admin"}
     ];
     const matches = [
-      { id: "A&BF-GAW", teams: ["Guyana Amazon Warriors", "Antigua & Barbuda Falcons"], tossTime: new Date(Date.now() + 20 * 60000) }
+      {id:"A&BF-GAW",teams:["Guyana Amazon Warriors","Antigua & Barbuda Falcons"], tossTime: new Date(Date.now()+20*60000)}
     ];
-    const ODDS = 1.93, MIN_BET = 10, MAX_BET = 100;
+    const ODDS=1.93, MIN_BET=10, MAX_BET=100;
+    let currentUser=null, allBets={};
 
-    let currentUser = null;
-    let allBets = {};
-
-    // --- Storage Handling ---
-    function saveData() {
+    function saveData(){
       localStorage.setItem("sc_users", JSON.stringify(users));
       localStorage.setItem("sc_bets", JSON.stringify(allBets));
       localStorage.setItem("sc_current", JSON.stringify(currentUser));
     }
 
-    function loadData() {
-      const u = localStorage.getItem("sc_users"),
-            b = localStorage.getItem("sc_bets"),
-            c = localStorage.getItem("sc_current");
-      if (u) users = JSON.parse(u);
-      if (b) allBets = JSON.parse(b);
-      if (c) currentUser = JSON.parse(c);
+    function loadData(){
+      users = JSON.parse(localStorage.getItem("sc_users")||JSON.stringify(users));
+      allBets = JSON.parse(localStorage.getItem("sc_bets")||JSON.stringify(allBets));
+      currentUser = JSON.parse(localStorage.getItem("sc_current")||"null");
     }
 
-    // --- UI Rendering ---
-    function showPanel() {
-      document.getElementById("loginContainer").style.display = "none";
-      if (!currentUser) return;
-      if (currentUser.role === "admin") {
-        document.getElementById("adminPanel").style.display = "block";
-        renderAdminMatches();
-        renderAccountStatement();
+    function clearPanels(){
+      document.getElementById("loginContainer").style.display="block";
+      document.getElementById("userPanel").style.display="none";
+      document.getElementById("adminPanel").style.display="none";
+    }
+
+    function showPanel(){
+      clearPanels();
+      if(!currentUser) return;
+      if(currentUser.role==="admin"){
+        document.getElementById("adminPanel").style.display="block";
+        renderAdminMatches(); renderAccountStatement();
       } else {
-        document.getElementById("userPanel").style.display = "block";
-        document.getElementById("userNameDisplay").textContent = currentUser.username;
-        updateBalance();
-        renderMatches();
-        renderUserBets();
+        document.getElementById("userPanel").style.display="block";
+        document.getElementById("userNameDisplay").textContent=currentUser.username;
+        updateBalance(); renderMatches(); renderUserBets();
       }
     }
 
-    function clearPanels() {
-      document.getElementById("userPanel").style.display = "none";
-      document.getElementById("adminPanel").style.display = "none";
-      document.getElementById("loginContainer").style.display = "block";
-    }
-
-    // --- Login / Logout ---
-    document.getElementById("loginBtn").onclick = () => {
-      const uname = document.getElementById("username").value.trim(),
-            pass = document.getElementById("password").value.trim(),
-            user = users.find(u => u.username === uname && u.password === pass);
-
-      if (!user) { alert("Invalid login"); return; }
-      currentUser = { ...user };
-      if (!allBets[currentUser.username]) allBets[currentUser.username] = [];
-      saveData();
-      clearPanels(); showPanel();
+    document.getElementById("loginBtn").onclick = ()=>{
+      const uname=document.getElementById("username").value.trim();
+      const pass=document.getElementById("password").value.trim();
+      const user=users.find(u=>u.username===uname && u.password===pass);
+      if(!user){alert("Invalid login"); return;}
+      currentUser={...user};
+      if(!allBets[currentUser.username]) allBets[currentUser.username]=[];
+      saveData(); showPanel();
     };
 
     document.getElementById("logoutBtnUser").onclick = logout;
     document.getElementById("logoutBtnAdmin").onclick = logout;
 
-    function logout() {
-      currentUser = null;
-      saveData();
-      clearPanels();
+    function logout(){
+      currentUser=null; saveData(); clearPanels();
     }
 
-    // --- User Interface Helpers ---
-    function updateBalance() {
-      document.getElementById("userBalance").textContent = currentUser.balance.toFixed(2);
+    function updateBalance(){
+      document.getElementById("userBalance").textContent=currentUser.balance.toFixed(2);
     }
 
-    function renderMatches() {
-      const container = document.getElementById("matchesContainer");
-      container.innerHTML = "";
-      const now = new Date();
-
-      matches.forEach(m => {
-        const isOpen = now < new Date(m.tossTime),
-              minsLeft = Math.floor((new Date(m.tossTime) - now) / 60000);
-
-        const div = document.createElement("div");
-        div.className = "match";
-        div.innerHTML = `
+    function renderMatches(){
+      const c=document.getElementById("matchesContainer"); c.innerHTML="";
+      const now=new Date();
+      matches.forEach(m=>{
+        const isOpen=now<new Date(m.tossTime);
+        const mins=Math.floor((new Date(m.tossTime)-now)/60000);
+        const div=document.createElement("div"); div.className="match";
+        div.innerHTML=`
           <h3>${m.teams[0]} vs ${m.teams[1]} - Toss</h3>
-          <div>${isOpen ? `Open - ${minsLeft} min left` : `<span style="color:#ff4d4d;">Closed</span>`}</div>
+          <div>${isOpen?`Open - ${mins} min left`:`<span style="color:#ff4d4d;">Closed</span>`}</div>
           <label>Bet Amount (₹${MIN_BET}-${MAX_BET}):</label>
-          <input type="number" id="amt-${m.id}" min="${MIN_BET}" max="${MAX_BET}" ${!isOpen ? "disabled" : ""}>
+          <input type="number" id="amt-${m.id}" min="${MIN_BET}" max="${MAX_BET}" ${!isOpen?"disabled":""}>
           <div class="bet-btns">
-            <button ${!isOpen ? "disabled class='disabled'" : ""} onclick="placeBet('${m.id}','${m.teams[0]}')">${m.teams[0]} @${ODDS}</button>
-            <button ${!isOpen ? "disabled class='disabled'" : ""} onclick="placeBet('${m.id}','${m.teams[1]}')">${m.teams[1]} @${ODDS}</button>
+            <button ${!isOpen?"disabled class='disabled'":""} onclick="placeBet('${m.id}','${m.teams[0]}')">${m.teams[0]} @${ODDS}</button>
+            <button ${!isOpen?"disabled class='disabled'":""} onclick="placeBet('${m.id}','${m.teams[1]}')">${m.teams[1]} @${ODDS}</button>
           </div>
-          <div class="result" id="res-${m.id}"></div>
-        `;
-        container.appendChild(div);
+          <div class="result" id="res-${m.id}"></div>`;
+        c.appendChild(div);
       });
     }
 
-    function placeBet(mid, team) {
-      const amtInput = document.getElementById(`amt-${mid}`);
-      const amt = parseFloat(amtInput.value);
-
-      if (isNaN(amt) || amt < MIN_BET || amt > MAX_BET) { alert("Invalid bet amount!"); return; }
-      if (amt > currentUser.balance) { alert("Insufficient balance!"); return; }
-
-      currentUser.balance -= amt;
-      users.find(u => u.username === currentUser.username).balance = currentUser.balance;
-      allBets[currentUser.username].push({
-        matchId: mid, team, amount: amt, odds: ODDS, settled: false, win: null, placedAt: new Date().toISOString()
-      });
-
-      saveData();
-      updateBalance();
-      renderUserBets();
+    function placeBet(mid, team){
+      const amt=parseFloat(document.getElementById(`amt-${mid}`).value);
+      if(isNaN(amt)||amt<MIN_BET||amt>MAX_BET){alert("Invalid bet amount");return;}
+      if(amt>currentUser.balance){alert("Insufficient balance");return;}
+      currentUser.balance-=amt;
+      users.find(u=>u.username===currentUser.username).balance=currentUser.balance;
+      allBets[currentUser.username].push({matchId:mid,team,amount:amt,odds:ODDS,settled:false,win:null,placedAt:new Date().toISOString()});
+      saveData(); updateBalance(); renderUserBets();
     }
 
-    function renderUserBets() {
-      const container = document.getElementById("userBetsList");
-      const bets = allBets[currentUser.username] || [];
-
-      if (!bets.length) {
-        container.textContent = "No active bets.";
-        return;
-      }
-
-      let html = `<table><tr><th>Match</th><th>Team</th><th>Amt</th><th>Odds</th><th>Status</th></tr>`;
-      bets.slice().reverse().forEach(b => {
-        const matchObj = matches.find(m => m.id === b.matchId);
-        const matchName = matchObj ? `${matchObj.teams[0]} vs ${matchObj.teams[1]}` : b.matchId;
-        const status = b.settled ? (b.win ? "Won" : "Lost") : "Pending";
-        html += `<tr><td>${matchName}</td><td>${b.team}</td><td>₹${b.amount}</td><td>${b.odds}</td><td>${status}</td></tr>`;
+    function renderUserBets(){
+      const c=document.getElementById("userBetsList");
+      const bets=allBets[currentUser.username]||[];
+      if(!bets.length){c.textContent="No active bets.";return;}
+      let html=`<table><tr><th>Match</th><th>Team</th><th>Amt</th><th>Odds</th><th>Status</th></tr>`;
+      bets.slice().reverse().forEach(b=>{
+        const m=matches.find(x=>x.id===b.matchId);
+        const name=m?`${m.teams[0]} vs ${m.teams[1]}`:b.matchId;
+        const status=b.settled?(b.win?"Won":"Lost"):"Pending";
+        html+=`<tr><td>${name}</td><td>${b.team}</td><td>₹${b.amount}</td><td>${b.odds}</td><td>${status}</td></tr>`;
       });
-      html += "</table>";
-      container.innerHTML = html;
+      html+="</table>"; c.innerHTML=html;
     }
 
-    // --- Admin Helpers ---
-    function renderAdminMatches() {
-      const container = document.getElementById("adminMatches");
-      container.innerHTML = "";
-
-      matches.forEach(m => {
-        const div = document.createElement("div");
-        div.className = "match";
-        div.innerHTML = `
+    function renderAdminMatches(){
+      const c=document.getElementById("adminMatches"); c.innerHTML="";
+      matches.forEach(m=>{
+        const div=document.createElement("div"); div.className="match";
+        div.innerHTML=`
           <h3>${m.teams[0]} vs ${m.teams[1]}</h3>
           <label>Set Winner:</label>
           <select id="win-${m.id}">
@@ -221,100 +175,57 @@
             <option value="${m.teams[1]}">${m.teams[1]}</option>
           </select>
           <button onclick="settle('${m.id}')">Settle</button>
-          <div id="aRes-${m.id}" class="result"></div>
-        `;
-        container.appendChild(div);
+          <div id="aRes-${m.id}" class="result"></div>`;
+        c.appendChild(div);
       });
     }
 
-    function settle(mid) {
-      const winner = document.getElementById(`win-${mid}`).value;
-      if (!winner) { alert("Please select a winner."); return; }
-
-      let won = 0, lost = 0;
-
-      Object.keys(allBets).forEach(username => {
-        allBets[username].forEach(b => {
-          if (b.matchId === mid && !b.settled) {
-            b.settled = true;
-            if (b.team === winner) {
-              b.win = true;
-              won++;
-              const usrObj = users.find(u => u.username === username);
-              usrObj.balance += b.amount * b.odds;
+    function settle(mid){
+      const winner=document.getElementById(`win-${mid}`).value;
+      if(!winner){alert("Select a winner");return;}
+      let winCount=0,loseCount=0;
+      Object.keys(allBets).forEach(user=>{
+        allBets[user].forEach(b=>{
+          if(b.matchId===mid && !b.settled){
+            b.settled=true;
+            if(b.team===winner){
+              b.win=true; winCount++;
+              users.find(u=>u.username===user).balance += b.amount * b.odds;
             } else {
-              b.win = false;
-              lost++;
+              b.win=false; loseCount++;
             }
           }
         });
       });
-
-      const resDiv = document.getElementById(`aRes-${mid}`);
-      resDiv.textContent = `Settled: ${won} won, ${lost} lost.`;
-
-      saveData();
-      renderAccountStatement();
+      document.getElementById(`aRes-${mid}`).textContent=`Settled: ${winCount} won, ${loseCount} lost.`;
+      saveData(); renderAccountStatement();
     }
 
-    function renderAccountStatement() {
-      const container = document.getElementById("accountStatement");
-      const allRows = [];
-
-      Object.keys(allBets).forEach(username => {
-        allBets[username].forEach(b => {
-          allRows.push({ ...b, username });
-        });
+    function renderAccountStatement(){
+      const c=document.getElementById("accountStatement");
+      const rows = Object.keys(allBets).flatMap(user =>
+        (allBets[user] || []).map(b => ({ ...b, user }))
+      );
+      if(!rows.length){c.textContent="No bets.";return;}
+      let html=`<table><tr><th>User</th><th>Match</th><th>Team</th><th>Amt</th><th>Odds</th><th>Result</th></tr>`;
+      rows.forEach(b=>{
+        const m=matches.find(x=>x.id===b.matchId);
+        const matchName=m?`${m.teams[0]} vs ${m.teams[1]}`:b.matchId;
+        const res=b.settled?(b.win?"Won":"Lost"):"Pending";
+        html+=`<tr><td>${b.user}</td><td>${matchName}</td><td>${b.team}</td><td>₹${b.amount}</td><td>${b.odds}</td><td>${res}</td></tr>`;
       });
-
-      if (!allRows.length) {
-        container.textContent = "No bets.";
-        return;
-      }
-
-      let html = `<table><tr><th>User</th><th>Match</th><th>Team</th><th>Amt</th><th>Odds</th><th>Result</th></tr>`;
-      allRows.forEach(b => {
-        const matchObj = matches.find(m => m.id === b.matchId);
-        const matchName = matchObj ? `${matchObj.teams[0]} vs ${matchObj.teams[1]}` : b.matchId;
-        const resText = b.settled ? (b.win ? "Won" : "Lost") : "Pending";
-        html += `<tr><td>${b.username}</td><td>${matchName}</td><td>${b.team}</td><td>₹${b.amount}</td><td>${b.odds}</td><td>${resText}</td></tr>`;
-      });
-      html += "</table>";
-      container.innerHTML = html;
+      html+="</table>"; c.innerHTML=html;
     }
 
-    // --- Cross-Tab Sync and Initialization ---
-    function syncData() {
-      const prevUsers = JSON.stringify(users);
+    window.addEventListener("storage", ()=>{
       loadData();
-
-      // If user is still logged in, update UI if needed
-      if (currentUser && currentUser.role === "user") {
-        const updatedUser = users.find(u => u.username === currentUser.username);
-        if (updatedUser && updatedUser.balance !== currentUser.balance) {
-          currentUser.balance = updatedUser.balance;
-          updateBalance();
-        }
-        renderUserBets();
+      if(currentUser){
+        if(currentUser.role==="admin") showPanel();
+        else {showPanel();}
       }
+    });
 
-      if (currentUser && currentUser.role === "admin") {
-        renderAccountStatement();
-        renderAdminMatches();
-      }
-
-      if (JSON.stringify(users) !== prevUsers) {
-        // State changed outside this tab; update balance if needed
-        saveData(); // Re-sync
-      }
-    }
-
-    window.addEventListener("storage", syncData);
-    setInterval(syncData, 3000);
-
-    // --- Initial App Load ---
-    loadData();
-    showPanel();
+    loadData(); showPanel();
   </script>
 </body>
 </html>
